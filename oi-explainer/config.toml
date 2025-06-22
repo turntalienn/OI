@@ -1,0 +1,6 @@
+[filter]
+exclude_packages = ["org.springframework", "java.lang"]
+
+[visual]
+depth_scale = 10.0
+angle_scale = 0.001 
