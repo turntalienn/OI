@@ -56,19 +56,28 @@ public class OiClassFileTransformer implements ClassFileTransformer {
             return false;
         }
 
+        // Suppress framework noise unless explicitly configured
+        if (!properties.getInstrumentation().isFramework()) {
+            if (className.startsWith("org/springframework/") ||
+                className.startsWith("org/apache/catalina/") ||
+                className.startsWith("org/apache/tomcat/")) {
+                return false;
+            }
+        }
+
         // Instrument java.lang.Thread specifically for thread start interception
         if (properties.getInstrumentation().isThreads() && "java/lang/Thread".equals(className)) {
             return true;
         }
 
-        // Instrument JDBC statements
-        if (isJdbcStatement(className)) {
+        // Instrument JDBC statements, but only if not framework noise
+        if (isJdbcStatement(className) && (properties.getInstrumentation().isFramework() || !className.startsWith("org/springframework/"))) {
             return true;
         }
 
         // Check against user-configured packages
         for (String pkg : includePackages) {
-            if (className.startsWith(pkg)) {
+            if (className.replace('/', '.').startsWith(pkg)) {
                 return true;
             }
         }

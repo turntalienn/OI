@@ -8,6 +8,9 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class OiMethodAdapter extends AdviceAdapter {
     private final String methodName;
     private final String className;
@@ -17,6 +20,8 @@ public class OiMethodAdapter extends AdviceAdapter {
     private int maxLocals = 0;
     private final boolean isJdbcStatement;
     private int startTimeVar = -1;
+    private final Set<Label> instrumentedLabels = new HashSet<>();
+    private int branchCounter = 0;
 
     protected OiMethodAdapter(MethodVisitor methodVisitor, int access, String name, String desc, String className, OiCoreProperties properties) {
         super(ASM9, methodVisitor, access, name, desc);
@@ -145,5 +150,53 @@ public class OiMethodAdapter extends AdviceAdapter {
             mv.visitMethodInsn(INVOKESTATIC, "io/oi/core/trace/Tracer", "endTrace",
                     "(Ljava/lang/Object;Ljava/lang/Throwable;)V", false);
         }
+    }
+
+    @Override
+    public void visitJumpInsn(int opcode, Label label) {
+        // Only instrument conditional branches, not unconditional jumps like GOTO
+        if (isConditionalBranch(opcode)) {
+            branchCounter++;
+            String branchId = className + "." + methodName + ".branch_" + branchCounter;
+            
+            // Record the branch evaluation
+            mv.visitLdcInsn(branchId);
+            mv.visitMethodInsn(INVOKESTATIC, "io/oi/core/trace/Tracer", "recordBranchTaken", "(Ljava/lang/String;)V", false);
+        }
+        
+        super.visitJumpInsn(opcode, label);
+    }
+
+    private boolean isConditionalBranch(int opcode) {
+        switch (opcode) {
+            case IFEQ: case IFNE: case IFLT: case IFGE: case IFGT: case IFLE:
+            case IF_ICMPEQ: case IF_ICMPNE: case IF_ICMPLT: case IF_ICMPGE: case IF_ICMPGT: case IF_ICMPLE:
+            case IF_ACMPEQ: case IF_ACMPNE:
+            case IFNULL: case IFNONNULL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @Override
+    public void visitLabel(Label label) {
+        // Only instrument loop labels that haven't been instrumented yet
+        // This is a simplified approach - in a real implementation, you'd use more sophisticated analysis
+        if (!instrumentedLabels.contains(label) && isLikelyLoopLabel(label)) {
+            instrumentedLabels.add(label);
+            String loopId = className + "." + methodName + ".loop_" + label.toString();
+            mv.visitLdcInsn(loopId);
+            mv.visitMethodInsn(INVOKESTATIC, "io/oi/core/trace/Tracer", "recordLoopEntered", "(Ljava/lang/String;)V", false);
+        }
+        
+        super.visitLabel(label);
+    }
+
+    private boolean isLikelyLoopLabel(Label label) {
+        // This is a heuristic - in practice, you'd need more sophisticated analysis
+        // to determine if a label is actually part of a loop
+        String labelStr = label.toString();
+        return labelStr.contains("loop") || labelStr.contains("for") || labelStr.contains("while");
     }
 } 

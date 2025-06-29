@@ -68,7 +68,10 @@ public final class Tracer {
             FlowCallNode parent = stack.peek();
             if (parent != null) {
                 parent.addChild(node);
+                node.setCallDepth(parent.getCallDepth() + 1);
             }
+        } else {
+            node.setCallDepth(0);
         }
         stack.push(node);
     }
@@ -164,6 +167,36 @@ public final class Tracer {
         FlowCallNode currentNode = stack.peek();
         if (currentNode != null) {
             currentNode.addDbEvent(new DbQueryEvent(sql, durationNanos, rowCount));
+        }
+    }
+
+    /**
+     * Records that a branch (e.g., if/else) was taken in the current method.
+     */
+    public static void recordBranchTaken(String branch) {
+        Deque<FlowCallNode> stack = callStack.get();
+        if (!stack.isEmpty()) {
+            stack.peek().addBranchTaken(branch);
+        }
+    }
+
+    /**
+     * Records that a loop (e.g., for/while) was entered in the current method.
+     */
+    public static void recordLoopEntered(String loop) {
+        Deque<FlowCallNode> stack = callStack.get();
+        if (!stack.isEmpty()) {
+            stack.peek().addLoopEntered(loop);
+        }
+    }
+
+    /**
+     * Sets the call depth for the current node.
+     */
+    public static void setCallDepth(int depth) {
+        Deque<FlowCallNode> stack = callStack.get();
+        if (!stack.isEmpty()) {
+            stack.peek().setCallDepth(depth);
         }
     }
 

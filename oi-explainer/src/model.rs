@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FlowTree {
     pub trace_id: String,
@@ -10,7 +10,7 @@ pub struct FlowTree {
     pub end_nanos: u64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FlowCallNode {
     pub method_details: MethodDetails,
@@ -24,9 +24,13 @@ pub struct FlowCallNode {
     // returnValue and exception are tricky to type; we'll use serde_json::Value
     pub return_value: Option<serde_json::Value>,
     pub exception: Option<serde_json::Value>,
+    #[serde(default)]
+    pub branches_taken: Vec<String>,
+    #[serde(default)]
+    pub loops_entered: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct MethodDetails {
     pub class_name: String,
@@ -36,7 +40,7 @@ pub struct MethodDetails {
     pub parameters: HashMap<String, serde_json::Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExecutionDetails {
     pub start_nanos: u64,
@@ -44,7 +48,7 @@ pub struct ExecutionDetails {
     pub thread_info: ThreadInfo,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CodeAnalysis {
     pub instruction_count: i32,
@@ -53,7 +57,7 @@ pub struct CodeAnalysis {
     pub conditional_branches: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ThreadInfo {
     pub thread_id: u64,
@@ -61,7 +65,7 @@ pub struct ThreadInfo {
     pub is_virtual: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DbQueryEvent {
     pub sql: String,

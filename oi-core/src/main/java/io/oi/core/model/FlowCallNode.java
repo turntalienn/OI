@@ -7,6 +7,7 @@ import io.oi.core.model.event.DbQueryEvent;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FlowCallNode {
     private final MethodDetails methodDetails;
@@ -16,6 +17,9 @@ public class FlowCallNode {
     private final List<DbQueryEvent> dbEvents = new CopyOnWriteArrayList<>();
     private Object returnValue;
     private Throwable exception;
+    private final List<String> branchesTaken = new CopyOnWriteArrayList<>();
+    private final List<String> loopsEntered = new CopyOnWriteArrayList<>();
+    private int callDepth = 0;
 
     public FlowCallNode(MethodDetails methodDetails, ExecutionDetails executionDetails, CodeAnalysis codeAnalysis) {
         this.methodDetails = methodDetails;
@@ -31,7 +35,10 @@ public class FlowCallNode {
             @JsonProperty("children") List<FlowCallNode> children,
             @JsonProperty("dbEvents") List<DbQueryEvent> dbEvents,
             @JsonProperty("returnValue") Object returnValue,
-            @JsonProperty("exception") Throwable exception) {
+            @JsonProperty("exception") Throwable exception,
+            @JsonProperty("branchesTaken") List<String> branchesTaken,
+            @JsonProperty("loopsEntered") List<String> loopsEntered,
+            @JsonProperty("callDepth") int callDepth) {
         this.methodDetails = methodDetails;
         this.executionDetails = executionDetails;
         this.codeAnalysis = codeAnalysis;
@@ -43,6 +50,9 @@ public class FlowCallNode {
         }
         this.returnValue = returnValue;
         this.exception = exception;
+        if (branchesTaken != null) this.branchesTaken.addAll(branchesTaken);
+        if (loopsEntered != null) this.loopsEntered.addAll(loopsEntered);
+        this.callDepth = callDepth;
     }
 
 
@@ -59,6 +69,13 @@ public class FlowCallNode {
         this.exception = exception;
         this.executionDetails.setEndNanos(System.nanoTime());
     }
+
+    public void addBranchTaken(String branch) { branchesTaken.add(branch); }
+    public void addLoopEntered(String loop) { loopsEntered.add(loop); }
+    public void setCallDepth(int depth) { this.callDepth = depth; }
+    public int getCallDepth() { return callDepth; }
+    public List<String> getBranchesTaken() { return new ArrayList<>(branchesTaken); }
+    public List<String> getLoopsEntered() { return new ArrayList<>(loopsEntered); }
 
     // Getters
 

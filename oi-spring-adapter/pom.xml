@@ -5,15 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <groupId>io.oi</groupId>
+        <artifactId>oi-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>io.oi</groupId>
     <artifactId>oi-spring-adapter</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>oi-spring-adapter</name>
@@ -21,7 +19,6 @@
 
     <properties>
         <java.version>21</java.version>
-        <oi-core.version>1.0.0-SNAPSHOT</oi-core.version>
     </properties>
 
     <dependencies>
@@ -29,7 +26,6 @@
         <dependency>
             <groupId>io.oi</groupId>
             <artifactId>oi-core</artifactId>
-            <version>${oi-core.version}</version>
         </dependency>
 
         <!-- Spring Boot Starters -->
